@@ -15,8 +15,8 @@ import printOnComplete
 object Main {
     @JvmStatic
     fun main(args: Array<String>) {
-        run()
-        //runWithSupervisorScope()
+        //run()
+        runWithSupervisorScope()
         //runWithCoroutineScope() /* Same behavior as run() */
     }
 
