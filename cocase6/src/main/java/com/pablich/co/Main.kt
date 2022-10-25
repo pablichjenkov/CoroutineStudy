@@ -19,7 +19,8 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         //runLaunch()
-        runAsync()
+        //runAsync()
+        runLaunchCatching()
     }
 
     fun runLaunch() = runBlocking {
@@ -79,6 +80,56 @@ object Main {
         }
 
         println("Main is done!")
+    }
+
+    fun runLaunchCatching() = runBlocking {
+        val job = scope.launch {
+            launchCatching(
+                onException = { ex ->
+                    println("I have recovered from: ${ex.message}")
+                },
+                onClean = {
+                    println("Should cleanup any open resource")
+                }
+            ) {
+                delay(50)
+                throw IllegalArgumentException("An absolute disaster!")
+            }
+
+        }
+
+        job.cancelAndJoin()
+        // Cancel happens asynchronously, if not using job.cancelAndJoin() or job.join()
+        // we need a delay to see the logs
+        // delay(100)
+
+        job.invokeOnCompletion { throwable ->
+            when (throwable) {
+                is CancellationException -> println("Job was cancelled!")
+                is Throwable -> println("Job failed with exception!")
+                null -> println("Job completed normally!")
+            }
+        }
+
+        println("Main is done!")
+    }
+
+    // In general a coroutine body should look like bellow
+    fun CoroutineScope.generalCoroutinePattern() {
+        launch {
+            // Open cancelable resources here
+            try {
+                // Do work here
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Handle Exception here
+            } finally {
+                withContext(NonCancellable) {
+                    // Clean opened resources here
+                }
+            }
+        }
     }
 
 }
